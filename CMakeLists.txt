@@ -20,7 +20,21 @@ add_executable(SDL_Test src/main.cpp
         src/TileMap.cpp
         src/TileMap.h
         src/Entity.cpp
-        src/Entity.h)
+        src/Entity.h
+        src/Config.h
+        src/EntityType.h
+        src/EntityFactory.cpp
+        src/EntityFactory.h
+        src/Enemy.cpp
+        src/Enemy.h
+        src/Camera.cpp
+        src/Camera.h
+        src/RenderComponent.h
+        src/ShapeRenderComponent.h
+        src/ShapeRenderComponent.cpp
+        src/AIComponent.h
+        src/PatrolAIComponent.cpp
+        src/PatrolAIComponent.h)
 
 #include the src directory
 target_include_directories(SDL_Test PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)

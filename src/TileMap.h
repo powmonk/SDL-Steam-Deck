@@ -7,7 +7,7 @@ public:
     Tilemap();
     void init(int size);
     void load(const std::vector<std::vector<int>>& map); // Ensure this is declared
-    void render(SDL_Renderer* renderer);
+    void render(SDL_Renderer* renderer, int cameraX, int cameraY, int logicalWidth);
     const std::vector<std::vector<int>>& getMapData() const;
 
 private:

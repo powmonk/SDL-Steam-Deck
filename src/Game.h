@@ -5,6 +5,7 @@
 #include "TileMap.h"
 #include "Player.h"
 #include "Level.h"
+#include "Camera.h"
 
 
 class Game {
@@ -30,6 +31,10 @@ private:
     Tilemap tilemap;
     /// A list to hold all entities in the game
     std::vector<std::unique_ptr<Entity>> entities;
-    //Player* player_ptr = nullptr; // A raw pointer for easy access to the player
+    Camera camera;
+
+    // Store the calculated logical dimensions
+    int mLogicalWidth;
+    int mLogicalHeight;
 
 };

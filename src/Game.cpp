@@ -1,18 +1,43 @@
 #include "Game.h"
 #include "Level.h"
 #include "Player.h" // Needed to create a Player instance
+#include "Enemy.h"
+#include "Config.h"
+#include "EntityFactory.h"
+#include "EntityType.h"
+#include "Camera.h"
 #include <iostream>
 
-// Define a fixed logical resolution for our game (16:9 aspect ratio)
-const int LOGICAL_WIDTH = 1920;
-const int LOGICAL_HEIGHT = 1080;
+// A helper function for AABB collision check
+bool checkCollision(const SDL_Rect& a, const SDL_Rect& b) {
+    // The sides of the rectangles
+    int leftA = a.x;
+    int rightA = a.x + a.w;
+    int topA = a.y;
+    int bottomA = a.y + a.h;
+
+    int leftB = b.x;
+    int rightB = b.x + b.w;
+    int topB = b.y;
+    int bottomB = b.y + b.h;
+
+    // If any of the sides from A are outside of B
+    if (bottomA <= topB || topA >= bottomB || rightA <= leftB || leftA >= rightB) {
+        return false;
+    }
+
+    return true;
+}
 
 Game::Game() :
-    isRunning(false),
-    window(nullptr),
-    renderer(nullptr),
-    gameController(nullptr),
-    tileSize(0)
+isRunning(false),
+  window(nullptr),
+  renderer(nullptr),
+  gameController(nullptr),
+  tileSize(0),
+  camera(),
+  mLogicalWidth(0),
+  mLogicalHeight(0)
 {}
 
 Game::~Game() {
@@ -20,18 +45,16 @@ Game::~Game() {
 }
 
 void Game::init() {
-    // Initialize SDL subsystems
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER) < 0) {
         std::cout << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
         return;
     }
 
-    // Get display mode to create a fullscreen window
     SDL_DisplayMode displayMode;
     SDL_GetDesktopDisplayMode(0, &displayMode);
 
     window = SDL_CreateWindow("Platformer", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-                              displayMode.w, displayMode.h, SDL_WINDOW_FULLSCREEN_DESKTOP);
+                              displayMode.w, displayMode.h, SDL_WINDOW_FULLSCREEN);
     if (!window) {
         std::cout << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
         return;
@@ -43,38 +66,39 @@ void Game::init() {
         return;
     }
 
-    // This tells the window to capture all keyboard input.
-    SDL_SetWindowKeyboardGrab(window, SDL_TRUE);
+    // --- ASPECT RATIO CALCULATION ---
+    float aspectRatio = (float)displayMode.w / (float)displayMode.h;
+    mLogicalHeight = GameConfig::FIXED_LOGICAL_HEIGHT; // Use the new constant name
+    mLogicalWidth = (int)(mLogicalHeight * aspectRatio);
 
-    // Set the logical size for automatic scaling
-    SDL_RenderSetLogicalSize(renderer, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+    // Set the logical size using the variables we just calculated
+    SDL_RenderSetLogicalSize(renderer, mLogicalWidth, mLogicalHeight);
 
-    // Load the level from the file
+    camera.setDimensions(mLogicalWidth, mLogicalHeight);
+
     if (!level.loadFromFile("../src/Maps/00.txt")) {
-        // If the level fails to load, we can't run the game.
         isRunning = false;
         return;
     }
 
-    // Calculate tile size based on our fixed logical height
-    tileSize = LOGICAL_HEIGHT / level.getHeight();
+    // Calculate tile size using the new variable
+    tileSize = mLogicalHeight / level.getHeight();
 
-    // Initialize the tilemap
     tilemap.init(tileSize);
     tilemap.load(level.getMapData());
 
-    // Create the player and add it to the entities list
-    auto player = std::make_unique<Player>();
-    //player_ptr = player.get(); // Get a raw pointer for direct access (input handling)
-    player->init(renderer, tileSize, 100.0f, 100.0f);
-    entities.push_back(std::move(player));
+    // Entity Creation
+    const auto& spawns = level.getEntitySpawns();
+    for (const auto& spawnData : spawns) {
+        float pixelX = spawnData.tileX * tileSize;
+        float pixelY = spawnData.tileY * tileSize;
+        auto entity = EntityFactory::create(spawnData.type, tileSize, pixelX, pixelY);
+        if (entity) {
+            entities.push_back(std::move(entity));
+        }
+    }
 
-    // In the future, you could add enemies here!
-    // auto enemy = std::make_unique<Enemy>();
-    // enemy->init(renderer, tileSize, 400.0f, 100.0f);
-    // entities.push_back(std::move(enemy));
-
-    // Look for and open a game controller
+    // Controller setup
     for (int i = 0; i < SDL_NumJoysticks(); ++i) {
         if (SDL_IsGameController(i)) {
             gameController = SDL_GameControllerOpen(i);
@@ -125,7 +149,10 @@ void Game::run() {
 void Game::handleEvents() {
     SDL_Event e;
     while (SDL_PollEvent(&e) != 0) {
-        if (e.type == SDL_QUIT || (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE)) {
+        if (e.type == SDL_QUIT ||
+           (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE) ||
+           (e.type == SDL_CONTROLLERBUTTONDOWN && e.cbutton.button == SDL_CONTROLLER_BUTTON_START))
+        {
             isRunning = false;
         }
 
@@ -136,26 +163,92 @@ void Game::handleEvents() {
     }
 }
 void Game::update() {
-    // Polymorphically update all entities in the game
+    // 1. Update Camera Position
+    // We'll assume the first entity is the player for the camera to follow
+    if (!entities.empty()) {
+        int levelPixelWidth = level.getWidth() * tileSize;
+        int levelPixelHeight = level.getHeight() * tileSize;
+        camera.update(entities[0].get(), levelPixelWidth, levelPixelHeight);
+    }
+
+    // 2. Polymorphically update all entities
     for (auto& entity : entities) {
-        entity->update(tilemap.getMapData());
+        entity->update(level.getMapData());
+    }
+
+    // 3. Handle Entity-vs-Entity collisions with resolution
+    for (size_t i = 0; i < entities.size(); ++i) {
+        for (size_t j = i + 1; j < entities.size(); ++j) {
+            Entity* entityA = entities[i].get();
+            Entity* entityB = entities[j].get();
+
+            SDL_Rect boxA = entityA->getBoundingBox();
+            SDL_Rect boxB = entityB->getBoundingBox();
+
+            if (checkCollision(boxA, boxB)) {
+                // --- COLLISION RESPONSE LOGIC ---
+
+                // First, identify the player and the other entity
+                Player* player = dynamic_cast<Player*>(entityA);
+                Entity* other = entityB;
+                if (!player) {
+                    player = dynamic_cast<Player*>(entityB);
+                    other = entityA;
+                }
+
+                // If this is a collision involving the player
+                if (player && dynamic_cast<Enemy*>(other)) {
+                    // --- A. Physical Resolution (The Push) ---
+                    SDL_Rect playerBox = player->getBoundingBox();
+                    SDL_Rect otherBox = other->getBoundingBox();
+
+                    // Calculate the overlap on the X axis
+                    float overlapX = std::min(playerBox.x + playerBox.w, otherBox.x + otherBox.w) - std::max(playerBox.x, otherBox.x);
+
+                    // Find player and other centers
+                    float playerCenterX = playerBox.x + playerBox.w / 2.0f;
+                    float otherCenterX = otherBox.x + otherBox.w / 2.0f;
+
+                    // Push the player out of the other entity
+                    if (playerCenterX < otherCenterX) {
+                        // Player is on the left, push them left
+                        player->setPosition(playerBox.x - overlapX, playerBox.y);
+                    } else {
+                        // Player is on the right, push them right
+                        player->setPosition(playerBox.x + overlapX, playerBox.y);
+                    }
+
+                    // --- B. Gameplay Logic (The Damage) ---
+                    if (!player->isInvincible()) {
+                        player->takeDamage(other);
+                    }
+                }
+            }
+        }
     }
 }
 
 void Game::render() {
-    // Clear screen
     SDL_SetRenderDrawColor(renderer, 20, 20, 50, 255);
     SDL_RenderClear(renderer);
 
-    // Render the world
-    tilemap.render(renderer);
+    int cameraX = camera.getX();
+    int cameraY = camera.getY();
 
-    // Polymorphically render all entities in the game
+    // The tilemap render call doesn't change
+    tilemap.render(renderer, cameraX, cameraY, mLogicalWidth);
+
+    // --- NEW ENTITY RENDER LOOP ---
     for (auto& entity : entities) {
-        entity->render();
+        RenderComponent* component = entity->getRenderComponent();
+        if (component) {
+            SDL_Rect box = entity->getBoundingBox();
+            int screenX = box.x - cameraX;
+            int screenY = box.y - cameraY;
+            component->render(renderer, screenX, screenY);
+        }
     }
 
-    // Update screen
     SDL_RenderPresent(renderer);
 }
 
