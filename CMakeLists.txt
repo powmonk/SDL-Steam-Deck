@@ -38,7 +38,9 @@ add_executable(SDL_Test src/main.cpp
         src/PatrolAIComponent.cpp
         src/PatrolAIComponent.h
         src/SpriteRenderComponent.cpp
-        src/SpriteRenderComponent.h)
+        src/SpriteRenderComponent.h
+        src/Tile.cpp
+        src/Tile.h)
 
 #include the src directory
 target_include_directories(SDL_Test PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)

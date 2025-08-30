@@ -85,12 +85,12 @@ void Game::init() {
     camera.setDimensions(mLogicalWidth, mLogicalHeight);
 
     // --- Load Textures ---
-    // Place sprites in an "assets" folder. If a file doesn't exist, IMG_LoadTexture returns nullptr,
+    // Place sprites in an "Assets" folder. If a file doesn't exist, IMG_LoadTexture returns nullptr,
     // and your fallback system will automatically take over.
-    mPlayerTexture = IMG_LoadTexture(renderer, "../assets/player.png");
+    mPlayerTexture = IMG_LoadTexture(renderer, "../Assets/player.png");
     if (!mPlayerTexture) std::cout << "Warning: Could not load player texture. Using fallback shape." << std::endl;
 
-    mEnemyTexture = IMG_LoadTexture(renderer, "../assets/enemy.png");
+    mEnemyTexture = IMG_LoadTexture(renderer, "../Assets/enemy.png");
     if (!mEnemyTexture) std::cout << "Warning: Could not load enemy texture. Using fallback shape." << std::endl;
 
 
@@ -102,7 +102,14 @@ void Game::init() {
     // Calculate tile size using the new variable
     tileSize = GameConfig::TILE_SIZE; // Use the reliable constant
 
-    tilemap.init(tileSize);
+    //Load tile textures
+    mTile1Texture = IMG_LoadTexture(renderer, "../src/Assets/tile0.png");
+    if (!mTile1Texture) std::cout << "Warning: Could not load tile1 texture." << std::endl;
+
+    mTile2Texture = IMG_LoadTexture(renderer, "../src/Assets/tile1.png");
+    if (!mTile2Texture) std::cout << "Warning: Could not load tile2 texture." << std::endl;
+
+    tilemap.init(tileSize, mTile1Texture, mTile2Texture);
     tilemap.load(level.getMapData());
 
     /// --- MODIFIED Entity Creation Loop ---

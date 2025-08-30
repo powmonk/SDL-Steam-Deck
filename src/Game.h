@@ -40,5 +40,7 @@ private:
     //Textures for entities
     SDL_Texture* mPlayerTexture = nullptr; // <-- Add texture members
     SDL_Texture* mEnemyTexture = nullptr;  // <-- Initialize to nullptr
+    SDL_Texture* mTile1Texture = nullptr; // <-- Add this
+    SDL_Texture* mTile2Texture = nullptr; // <-- Add this
 };
 
