@@ -27,9 +27,12 @@ bool Level::loadFromFile(const std::string& filepath) {
             // --- TILE PARSING LOGIC ---
             std::vector<int> row;
             for (char c : line) {
-                if (c == '1') {
-                    row.push_back(1);
+                if (c >= '0' && c <= '9') {
+                    // This converts the character '0', '1', '2', etc.,
+                    // to the integer 0, 1, 2.
+                    row.push_back(c - '0');
                 } else {
+                    // If the character is not a digit, treat it as empty space.
                     row.push_back(0);
                 }
             }

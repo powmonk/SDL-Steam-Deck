@@ -1,6 +1,8 @@
 #include "TileMap.h"
 #include "Level.h"
 #include "Config.h"
+#include <iostream>
+using namespace std;
 
 
 Tilemap::Tilemap() : tileSize(0) {}
@@ -33,15 +35,27 @@ void Tilemap::render(SDL_Renderer* renderer, int cameraX, int cameraY, int logic
 
     for (int row = startRow; row < endRow; ++row) {
         for (int col = startCol; col < endCol; ++col) {
-            if (mapData[row][col] == 1) {
+            if (mapData[row][col] != 0) {
                 SDL_Rect tileRect = {
                     (col * tileSize) - cameraX, // Apply camera offset
                     (row * tileSize) - cameraY, // Apply camera offset
                     tileSize,
                     tileSize
                 };
-                SDL_SetRenderDrawColor(renderer, 50, 200, 50, 255);
+                switch (mapData[row][col]) {
+                    case 1:
+                        //cout << mapData[row][col];
+                        SDL_SetRenderDrawColor(renderer, 50, 50, 50, 255);
+                        break;
+                    case 2:
+                        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+                        break;
+                    default:
+                        SDL_SetRenderDrawColor(renderer, 0, 200, 200, 255);
+                        // Add more cases here for new entity types
+                }
                 SDL_RenderFillRect(renderer, &tileRect);
+
             }
         }
     }
