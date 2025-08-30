@@ -10,6 +10,8 @@ void Enemy::init(float x, float y, int TILE_SIZE) {
     x_vel = 0.0f;
     y_vel = 0.0f;
     this->tileSize = TILE_SIZE;
+    aiComponent = std::make_unique<PatrolAIComponent>(); // <-- Add this line
+
 }
 
 void Enemy::setPosition(float newX, float newY) {

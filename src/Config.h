@@ -6,7 +6,7 @@
 namespace GameConfig {
     // Window and Rendering
     const int FIXED_LOGICAL_HEIGHT = 1080;
-    const int TILE_SIZE = 54;
+    const int TILE_SIZE = 44;
 
 
     // Physics
