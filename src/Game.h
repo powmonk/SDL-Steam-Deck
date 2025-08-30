@@ -6,6 +6,8 @@
 #include "Player.h"
 #include "Level.h"
 #include "Camera.h"
+#include <SDL2/SDL_image.h> // <-- Add this include
+
 
 
 class Game {
@@ -32,9 +34,11 @@ private:
     /// A list to hold all entities in the game
     std::vector<std::unique_ptr<Entity>> entities;
     Camera camera;
-
     // Store the calculated logical dimensions
     int mLogicalWidth;
     int mLogicalHeight;
-
+    //Textures for entities
+    SDL_Texture* mPlayerTexture = nullptr; // <-- Add texture members
+    SDL_Texture* mEnemyTexture = nullptr;  // <-- Initialize to nullptr
 };
+

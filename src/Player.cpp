@@ -1,22 +1,17 @@
 #include "Player.h"
 #include "Config.h"
-#include "ShapeRenderComponent.h" // <-- Make sure this is included
-#include <memory>                 // <-- Make sure this is included
+#include "ShapeRenderComponent.h"
+#include "SpriteRenderComponent.h"
+#include <memory>
 
 
-void Player::init(int size, float x, float y) {
-    tileSize = size;
+// (Example shown for Player, do the same for Enemy)
+void Player::init(float x, float y, int TILE_SIZE) {
     x_pos = x;
     y_pos = y;
     x_vel = 0.0f;
     y_vel = 0.0f;
-    width = tileSize;
-    height = tileSize * 1.5f;
-
-    // Player must create its own RenderComponent
-    SDL_Color red = {255, 0, 0, 255};
-    renderComponent = std::make_unique<ShapeRenderComponent>(width, height, red);
-
+    this->tileSize = TILE_SIZE; // <-- ADD THIS LINE
 }
 
 void Player::setPosition(float newX, float newY) {

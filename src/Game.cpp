@@ -7,6 +7,8 @@
 #include "EntityType.h"
 #include "Camera.h"
 #include <iostream>
+#include <SDL2/SDL_image.h> // <-- Add this include
+
 
 // A helper function for AABB collision check
 bool checkCollision(const SDL_Rect& a, const SDL_Rect& b) {
@@ -49,6 +51,12 @@ void Game::init() {
         std::cout << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
         return;
     }
+    // --- Add SDL_image initialization ---
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER) < 0) { /* ... */ }
+    if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG)) {
+        std::cout << "SDL_image could not initialize! IMG_Error: " << IMG_GetError() << std::endl;
+        // Don't return, we can fall back to shapes!
+    }
 
     SDL_DisplayMode displayMode;
     SDL_GetDesktopDisplayMode(0, &displayMode);
@@ -76,23 +84,36 @@ void Game::init() {
 
     camera.setDimensions(mLogicalWidth, mLogicalHeight);
 
+    // --- Load Textures ---
+    // Place sprites in an "assets" folder. If a file doesn't exist, IMG_LoadTexture returns nullptr,
+    // and your fallback system will automatically take over.
+    mPlayerTexture = IMG_LoadTexture(renderer, "../assets/player.png");
+    if (!mPlayerTexture) std::cout << "Warning: Could not load player texture. Using fallback shape." << std::endl;
+
+    mEnemyTexture = IMG_LoadTexture(renderer, "../assets/enemy.png");
+    if (!mEnemyTexture) std::cout << "Warning: Could not load enemy texture. Using fallback shape." << std::endl;
+
+
     if (!level.loadFromFile("../src/Maps/00.txt")) {
         isRunning = false;
         return;
     }
 
     // Calculate tile size using the new variable
-    tileSize = mLogicalHeight / level.getHeight();
+    tileSize = GameConfig::TILE_SIZE; // Use the reliable constant
 
     tilemap.init(tileSize);
     tilemap.load(level.getMapData());
 
-    // Entity Creation
+    /// --- MODIFIED Entity Creation Loop ---
     const auto& spawns = level.getEntitySpawns();
     for (const auto& spawnData : spawns) {
         float pixelX = spawnData.tileX * tileSize;
         float pixelY = spawnData.tileY * tileSize;
-        auto entity = EntityFactory::create(spawnData.type, tileSize, pixelX, pixelY);
+
+        // Pass the (possibly nullptr) textures to the factory
+        auto entity = EntityFactory::create(spawnData.type, pixelX, pixelY, tileSize, mPlayerTexture, mEnemyTexture);
+
         if (entity) {
             entities.push_back(std::move(entity));
         }
@@ -253,12 +274,18 @@ void Game::render() {
 }
 
 void Game::clean() {
+    // --- Clean up textures ---
+    if (mPlayerTexture) SDL_DestroyTexture(mPlayerTexture);
+    if (mEnemyTexture) SDL_DestroyTexture(mEnemyTexture);
+
+
     if (gameController) {
         SDL_GameControllerClose(gameController);
         gameController = nullptr;
     }
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
+    IMG_Quit();
     SDL_Quit();
     std::cout << "Game cleaned!" << std::endl;
 }

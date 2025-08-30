@@ -27,31 +27,29 @@ void Entity::handleCollisions(const std::vector<std::vector<int>>& mapData) {
     // --- Horizontal Collision ---
     x_pos += x_vel;
     int left_tile = x_pos / tileSize;
-    int right_tile = (x_pos + width) / tileSize;
+    // FIX 1: Check the pixel just INSIDE the right edge
+    int right_tile = (x_pos + width - 1) / tileSize;
     int top_tile = y_pos / tileSize;
-    int bottom_tile = (y_pos + height) / tileSize;
+    // FIX 2: Check the pixel just INSIDE the bottom edge
+    int bottom_tile = (y_pos + height - 1) / tileSize;
 
-    // By changing from <= to <, we no longer check the floor tile as a potential wall.
-    for (int row = top_tile; row < bottom_tile; ++row) { // <-- THE FIX IS HERE
+    for (int row = top_tile; row <= bottom_tile; ++row) { // Also, use <= here to check the bottom row
         if (row < 0 || row >= mapHeight) continue;
 
-        if (right_tile >= mapWidth) {
-            x_pos = mapWidth * tileSize - width;
-            break;
-        }
-        if (left_tile < 0) {
-            x_pos = 0;
-            break;
-        }
+        // Boundary checks (no change)
+        if (right_tile >= mapWidth) { x_pos = mapWidth * tileSize - width; break; }
+        if (left_tile < 0) { x_pos = 0; break; }
 
         if (x_vel > 0) { // Moving right
             if (mapData[row][right_tile] == 1) {
                 x_pos = right_tile * tileSize - width;
+                x_vel = 0; // Stop horizontal movement on collision
                 break;
             }
         } else if (x_vel < 0) { // Moving left
             if (mapData[row][left_tile] == 1) {
                 x_pos = (left_tile + 1) * tileSize;
+                x_vel = 0; // Stop horizontal movement on collision
                 break;
             }
         }
@@ -61,23 +59,18 @@ void Entity::handleCollisions(const std::vector<std::vector<int>>& mapData) {
     y_pos += y_vel;
     isOnGround = false;
     left_tile = x_pos / tileSize;
-    right_tile = (x_pos + width) / tileSize;
+    // FIX 3: Re-calculate with the corrected horizontal position and the -1 fix
+    right_tile = (x_pos + width - 1) / tileSize;
     top_tile = y_pos / tileSize;
-    bottom_tile = (y_pos + height) / tileSize;
+    // FIX 4: Re-calculate with the -1 fix
+    bottom_tile = (y_pos + height - 1) / tileSize;
 
     for (int col = left_tile; col <= right_tile; ++col) {
         if (col < 0 || col >= mapWidth) continue;
 
-        if (bottom_tile >= mapHeight) {
-            y_pos = mapHeight * tileSize - height;
-            isOnGround = true;
-            break;
-        }
-        if (top_tile < 0) {
-            y_pos = 0;
-            y_vel = 0;
-            break;
-        }
+        // Boundary checks (no change)
+        if (bottom_tile >= mapHeight) { y_pos = mapHeight * tileSize - height; isOnGround = true; break; }
+        if (top_tile < 0) { y_pos = 0; y_vel = 0; break; }
 
         if (y_vel > 0) { // Moving down
             if (mapData[bottom_tile][col] == 1) {

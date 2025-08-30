@@ -12,8 +12,10 @@ public:
     // The static method that will create our entities
     static std::unique_ptr<Entity> create(
         EntityType type,
-        int tileSize,
         float x,
-        float y
+        float y,
+        int tileSize,
+        SDL_Texture* playerTexture,
+        SDL_Texture* enemyTexture
     );
 };

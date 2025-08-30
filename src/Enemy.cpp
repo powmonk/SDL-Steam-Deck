@@ -4,20 +4,12 @@
 #include "PatrolAIComponent.h"
 #include <memory>
 
-void Enemy::init(int size, float x, float y) {
-    tileSize = size;
+void Enemy::init(float x, float y, int TILE_SIZE) {
     x_pos = x;
     y_pos = y;
     x_vel = 0.0f;
     y_vel = 0.0f;
-    width = tileSize;
-    height = tileSize;
-
-    // Give the enemy its "brain"
-    aiComponent = std::make_unique<PatrolAIComponent>();
-
-    SDL_Color blue = {0, 0, 255, 255};
-    renderComponent = std::make_unique<ShapeRenderComponent>(width, height, blue);
+    this->tileSize = TILE_SIZE;
 }
 
 void Enemy::setPosition(float newX, float newY) {

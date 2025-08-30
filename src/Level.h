@@ -3,7 +3,7 @@
 #include <string>
 #include "EntityType.h"
 
-// A simple struct to hold the data for spawning one entity
+// This is the struct declared in your header
 struct EntitySpawnData {
     EntityType type;
     int tileX;
@@ -12,17 +12,17 @@ struct EntitySpawnData {
 
 class Level {
 public:
-    bool loadFromFile(const std::string& filepath);
-
-    const std::vector<std::vector<int>>& getMapData() const;
-
-    // New getter for the entity spawn data
-    const std::vector<EntitySpawnData>& getEntitySpawns() const;
+    Level(); // <-- 1. DECLARE THE CONSTRUCTOR
+    bool loadFromFile(const std::string& filename);
 
     int getWidth() const;
     int getHeight() const;
+    const std::vector<std::vector<int>>& getMapData() const;
+    const std::vector<EntitySpawnData>& getEntitySpawns() const;
 
 private:
+    int width;  // <-- 2. DECLARE THE MEMBER VARIABLES
+    int height; // <-- 2. DECLARE THE MEMBER VARIABLES
     std::vector<std::vector<int>> mapData;
     std::vector<EntitySpawnData> entitySpawns;
 };

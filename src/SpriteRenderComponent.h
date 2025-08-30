@@ -1,15 +1,13 @@
-// SpriteRenderComponent.h
 #pragma once
 #include "RenderComponent.h"
+#include <SDL2/SDL_image.h>
 
-// A concrete RenderComponent for drawing a sprite (texture)
 class SpriteRenderComponent : public RenderComponent {
 public:
-    // The constructor now takes a pointer to an already-loaded texture
-    SpriteRenderComponent(SDL_Texture* tex, int w, int h);
-
-    // We still override the same render function
+    SpriteRenderComponent(SDL_Texture* tex); // <-- Correct constructor
     void render(SDL_Renderer* renderer, int x, int y) override;
+
+    void getDimensions(int& w, int& h) const; // <-- Add this method
 
 private:
     SDL_Texture* texture;

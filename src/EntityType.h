@@ -4,7 +4,8 @@
 #pragma once
 
 enum class EntityType {
-    Player,
-    // We'll add a simple enemy to show how the factory works
-    BasicEnemy
+    PLAYER,
+    ENEMY,
+    BLOCKER,
+    GOOMBA // Examples for later
 };
