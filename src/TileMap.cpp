@@ -31,8 +31,12 @@ void Tilemap::load(const std::vector<std::vector<int>>& map) {
             // Determine which texture to use based on the tile type
             switch (tileType) {
                 case 1:
-                    textureToUse = mTile1Texture;
-                    textureToUse = mTile2Texture;
+                    if (map[row-1][col] == 0) {
+                        textureToUse = mTile1Texture;
+                    }else {
+                        textureToUse = mTile2Texture;
+                    }
+
                     break;
                 case 2:
                     //textureToUse = mTile3Texture;
