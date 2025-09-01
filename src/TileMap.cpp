@@ -32,9 +32,10 @@ void Tilemap::load(const std::vector<std::vector<int>>& map) {
             switch (tileType) {
                 case 1:
                     textureToUse = mTile1Texture;
+                    textureToUse = mTile2Texture;
                     break;
                 case 2:
-                    textureToUse = mTile2Texture;
+                    //textureToUse = mTile3Texture;
                     break;
                 default:
                     // This will catch any unexpected tile numbers in your map file.
